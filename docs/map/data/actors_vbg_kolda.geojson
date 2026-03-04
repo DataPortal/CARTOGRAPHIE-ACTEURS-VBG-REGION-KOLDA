@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "geometry": { "type": "Point", "coordinates": [-14.95, 12.88] },
+  "properties": {
+    "structure": "CAOSP — Kolda",
+    "actor_type": "Service étatique",
+    "service_domains": "Prise en charge psychologique; soutien post-traumatique",
+    "service_gbv_type": "Psychosocial; Référencement",
+    "target_groups": "Survivant(e)s VBG; adolescents",
+    "phone": "33 996 13 45",
+    "email": "crospkolda@yahoo.fr",
+    "address": "Quartier Sikilo"
+  }
+}
