@@ -1,14 +1,39 @@
 {
-  "type": "Feature",
-  "geometry": { "type": "Point", "coordinates": [-14.95, 12.88] },
-  "properties": {
-    "structure": "CAOSP — Kolda",
-    "actor_type": "Service étatique",
-    "service_domains": "Prise en charge psychologique; soutien post-traumatique",
-    "service_gbv_type": "Psychosocial; Référencement",
-    "target_groups": "Survivant(e)s VBG; adolescents",
-    "phone": "33 996 13 45",
-    "email": "crospkolda@yahoo.fr",
-    "address": "Quartier Sikilo"
-  }
+"type": "FeatureCollection",
+"features": [
+{
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [-14.9413, 12.8985]
+},
+"properties": {
+"structure": "Service Régional de l'Action Sociale",
+"actor_type": "Service étatique",
+"service_domains": "Protection sociale",
+"phone": "77 369 68 69",
+"email": "sraskld@yahoo.fr",
+"address": "Bloc Administratif Bouna Kane",
+"departement": "Kolda"
+}
+},
+
+{
+"type": "Feature",
+"geometry": {
+"type": "Point",
+"coordinates": [-14.9413, 12.8985]
+},
+"properties": {
+"structure": "Centre Conseil Ado",
+"actor_type": "Service étatique",
+"service_domains": "Santé reproductive adolescents",
+"phone": "77 523 25 32",
+"email": "ndioungue01@yahoo.fr",
+"address": "CDEPS Kolda",
+"departement": "Kolda"
+}
+}
+
+]
 }
