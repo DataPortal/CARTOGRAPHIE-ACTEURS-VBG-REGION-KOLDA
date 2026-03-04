@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Carte — Acteurs VBG Kolda</title>
+
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --ink:#0b1220;
+      --muted:#5b6b80;
+      --line:rgba(11,18,32,.12);
+      --un-blue:#1f5fa8;
+      --uw-orange:#f58220;
+    }
+    body{ margin:0; font-family:system-ui, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+    .topbar{
+      position:sticky; top:0; z-index:1000;
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      padding:12px 14px;
+      background:rgba(255,255,255,.92);
+      border-bottom:1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .topbar .left{ display:flex; flex-direction:column; gap:2px; }
+    .topbar h1{ font-size:15px; margin:0; }
+    .topbar p{ font-size:12px; margin:0; color:var(--muted); }
+    .topbar .actions{ display:flex; gap:8px; align-items:center; }
+    .btn{
+      border:1px solid var(--line);
+      background:var(--card);
+      border-radius:12px;
+      padding:8px 10px;
+      font-weight:600;
+      cursor:pointer;
+      text-decoration:none;
+      color:var(--ink);
+      font-size:13px;
+    }
+    .btn.primary{
+      background:var(--un-blue);
+      border-color:transparent;
+      color:white;
+    }
+    #map{ height: calc(100vh - 58px); }
+    .legend{
+      position:absolute;
+      right:12px;
+      bottom:12px;
+      z-index:800;
+      background:rgba(255,255,255,.92);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      box-shadow: 0 10px 20px rgba(11,18,32,.10);
+      font-size:12px;
+      color:var(--muted);
+      max-width:260px;
+    }
+    .legend b{ color:var(--ink); }
+    .key{ display:flex; gap:8px; align-items:center; margin-top:6px; }
+    .swatch{ width:12px; height:12px; border-radius:50%; border:2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.12); }
+    .swatch.tri{
+      border-radius:2px;
+      width:0;height:0;
+      border-left:7px solid transparent;
+      border-right:7px solid transparent;
+      border-bottom:12px solid #111;
+      box-shadow:none;
+    }
+    .swatch.circle{ background: var(--un-blue); }
+
+    /* Popup styling */
+    .popup h3{ margin:0 0 6px; font-size:14px; }
+    .popup .meta{ font-size:12px; color:var(--muted); margin:0 0 10px; }
+    .popup .row{ margin:6px 0; font-size:12px; }
+    .popup .label{ color:var(--muted); }
+    .tag{
+      display:inline-block;
+      font-size:11px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(11,18,32,.12);
+      background: rgba(245,130,32,.10);
+      color: #7a3e00;
+      margin-right:6px;
+      margin-bottom:6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="left">
+      <h1>Carte interactive — Acteurs VBG (Kolda)</h1>
+      <p>Source : GeoJSON • Filtrage : type d’acteur • Popups : services & contacts</p>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-fit">Cadrer la carte</button>
+      <button class="btn" id="btn-toggle-state">Services étatiques</button>
+      <button class="btn" id="btn-toggle-osc">ONG/Associations</button>
+      <a class="btn primary" href="../">Retour accueil</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="legend">
+    <b>Légende</b>
+    <div class="key"><span class="swatch circle"></span> Service étatique</div>
+    <div class="key"><span class="swatch tri"></span> ONG / Association</div>
+    <div style="margin-top:8px;">
+      <span class="label">Données :</span> <code>data/actors_vbg_kolda.geojson</code>
+    </div>
+  </div>
+
+  <script src="./js/app.js"></script>
+</body>
+</html>
