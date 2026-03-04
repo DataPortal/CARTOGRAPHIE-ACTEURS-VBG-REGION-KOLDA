@@ -7,18 +7,23 @@
    - Recherche: nom de structure
    ========================================================= */
 
+"use strict";
+
 const GEOJSON_URL = "./data/actors_vbg_kolda.geojson";
 
-// Kolda approx
+// Kolda approx (Leaflet: [lat, lng])
 const MAP_DEFAULT = { center: [12.9, -14.95], zoom: 9 };
 
-// Helpers
-function safe(v){
+/* ----------------------------
+   Helpers
+---------------------------- */
+function safe(v) {
   if (v === null || v === undefined) return "";
   const s = String(v).trim();
   return s === "" ? "" : s;
 }
-function escHtml(s){
+
+function escHtml(s) {
   return String(s)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -26,17 +31,31 @@ function escHtml(s){
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-function splitTags(value){
+
+function splitTags(value) {
   const v = safe(value);
   if (!v) return [];
-  return v.split(/[;,]/).map(x => x.trim()).filter(Boolean);
-}
-function isStateActor(actorType){
-  const t = safe(actorType).toLowerCase();
-  return (t.includes("service") || t.includes("étatique") || t.includes("etat") || t.includes("state"));
+  return v
+    .split(/[;,]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
 }
 
-function triangleIcon(){
+function isStateActor(actorType) {
+  const t = safe(actorType).toLowerCase();
+  return (
+    t.includes("service") ||
+    t.includes("étatique") ||
+    t.includes("etat") ||
+    t.includes("état") ||
+    t.includes("state")
+  );
+}
+
+/* ----------------------------
+   Icons & Styles
+---------------------------- */
+function triangleIcon() {
   return L.divIcon({
     className: "triangle-marker",
     html: `
@@ -49,33 +68,45 @@ function triangleIcon(){
       "></div>
     `,
     iconSize: [16, 16],
-    iconAnchor: [8, 14]
+    iconAnchor: [8, 14],
+    popupAnchor: [0, -14],
   });
 }
 
-function makePopup(props){
-  const name = escHtml(safe(props.structure) || "Structure (non renseigné)");
+/* ----------------------------
+   Popup builder
+---------------------------- */
+function makePopup(props = {}) {
+  const name = escHtml(safe(props.structure) || "Structure (non renseignée)");
   const type = escHtml(safe(props.actor_type));
   const services = escHtml(safe(props.service_domains));
   const gbvTypesArr = splitTags(props.service_gbv_type);
-  const gbvTypes = gbvTypesArr.map(t => `<span class="tag">${escHtml(t)}</span>`).join(" ");
+  const gbvTypes = gbvTypesArr
+    .map((t) => `<span class="tag">${escHtml(t)}</span>`)
+    .join(" ");
   const targets = escHtml(safe(props.target_groups));
   const coverage = escHtml(safe(props.coverage_level));
-  const depts = escHtml(safe(props["departement(s)"] || props.departement || props.departements));
+
+  const deptsRaw =
+    props["departement(s)"] ?? props.departement ?? props.departements ?? "";
+  const depts = escHtml(safe(deptsRaw));
+
   const phone = escHtml(safe(props.phone));
   const email = escHtml(safe(props.email));
   const address = escHtml(safe(props.address));
 
   const contactLine = [
     phone ? `📞 ${phone}` : "",
-    email ? `✉️ ${email}` : ""
-  ].filter(Boolean).join(" • ");
+    email ? `✉️ ${email}` : "",
+  ]
+    .filter(Boolean)
+    .join(" • ");
 
   return `
     <div class="popup">
       <h3>${name}</h3>
-      <p class="meta">${type ? type : "Type non renseigné"} ${coverage ? "• " + coverage : ""}</p>
-      ${gbvTypes ? `<div>${gbvTypes}</div>` : ""}
+      <p class="meta">${type || "Type non renseigné"}${coverage ? " • " + coverage : ""}</p>
+      ${gbvTypes ? `<div class="tags">${gbvTypes}</div>` : ""}
       ${services ? `<div class="row"><span class="label">Services :</span> ${services}</div>` : ""}
       ${targets ? `<div class="row"><span class="label">Cibles :</span> ${targets}</div>` : ""}
       ${depts ? `<div class="row"><span class="label">Départements :</span> ${depts}</div>` : ""}
@@ -85,14 +116,22 @@ function makePopup(props){
   `;
 }
 
-// Init map
-const map = L.map("map").setView(MAP_DEFAULT.center, MAP_DEFAULT.zoom);
+/* ----------------------------
+   Init map
+---------------------------- */
+const map = L.map("map", { preferCanvas: true }).setView(
+  MAP_DEFAULT.center,
+  MAP_DEFAULT.zoom
+);
+
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   maxZoom: 19,
-  attribution: '&copy; OpenStreetMap contributors'
+  attribution: "&copy; OpenStreetMap contributors",
 }).addTo(map);
 
-// State
+/* ----------------------------
+   State
+---------------------------- */
 let rawFeatures = [];
 let layerAll = null;
 let allBounds = null;
@@ -100,18 +139,23 @@ let allBounds = null;
 const filterActorEl = document.getElementById("filter-actor");
 const filterServiceEl = document.getElementById("filter-service");
 const searchEl = document.getElementById("search");
+const btnFit = document.getElementById("btn-fit");
+const btnReset = document.getElementById("btn-reset");
 
-// Build service filter options
-function populateServiceFilter(features){
+/* ----------------------------
+   UI builders
+---------------------------- */
+function populateServiceFilter(features) {
   const set = new Set();
-  features.forEach(f=>{
+  features.forEach((f) => {
     const p = f.properties || {};
-    splitTags(p.service_gbv_type).forEach(t => set.add(t));
+    splitTags(p.service_gbv_type).forEach((t) => set.add(t));
   });
-  const opts = Array.from(set).sort((a,b)=>a.localeCompare(b, "fr"));
-  // reset
+
+  const opts = Array.from(set).sort((a, b) => a.localeCompare(b, "fr"));
+
   filterServiceEl.innerHTML = `<option value="all">Tous types de services</option>`;
-  opts.forEach(v=>{
+  opts.forEach((v) => {
     const o = document.createElement("option");
     o.value = v;
     o.textContent = v;
@@ -119,130 +163,143 @@ function populateServiceFilter(features){
   });
 }
 
-function currentFilters(){
+function currentFilters() {
   return {
-    actor: filterActorEl.value,   // all | state | osc
-    service: filterServiceEl.value, // all | serviceTag
-    search: safe(searchEl.value).toLowerCase()
+    actor: filterActorEl?.value || "all", // all | state | osc
+    service: filterServiceEl?.value || "all", // all | serviceTag
+    search: safe(searchEl?.value).toLowerCase(),
   };
 }
 
-function featureMatchesFilters(f, filters){
+function featureMatchesFilters(f, filters) {
   const p = f.properties || {};
   const actorType = safe(p.actor_type);
-  const isState = isStateActor(actorType);
+  const state = isStateActor(actorType);
 
-  // actor filter
-  if (filters.actor === "state" && !isState) return false;
-  if (filters.actor === "osc" && isState) return false;
+  if (filters.actor === "state" && !state) return false;
+  if (filters.actor === "osc" && state) return false;
 
-  // service filter (tag)
-  if (filters.service !== "all"){
-    const tags = splitTags(p.service_gbv_type).map(x=>x.toLowerCase());
+  if (filters.service !== "all") {
+    const tags = splitTags(p.service_gbv_type).map((x) => x.toLowerCase());
     if (!tags.includes(filters.service.toLowerCase())) return false;
   }
 
-  // search (structure)
-  if (filters.search){
+  if (filters.search) {
     const name = safe(p.structure).toLowerCase();
     if (!name.includes(filters.search)) return false;
   }
+
   return true;
 }
 
-function buildLayer(features){
+/* ----------------------------
+   Layer builder
+---------------------------- */
+function buildLayer(features) {
   return L.geoJSON(features, {
     pointToLayer: (feature, latlng) => {
       const p = feature.properties || {};
-      if (isStateActor(p.actor_type)){
+      const state = isStateActor(p.actor_type);
+
+      if (state) {
         return L.circleMarker(latlng, {
           radius: 6,
           fillColor: "#1f5fa8",
           color: "#ffffff",
           weight: 2,
           opacity: 1,
-          fillOpacity: 0.9
+          fillOpacity: 0.9,
         });
       }
+
       return L.marker(latlng, { icon: triangleIcon() });
     },
-    function onEachFeature(feature, layer) {
 
-const p = feature.properties;
+    onEachFeature: (feature, layer) => {
+      const p = feature.properties || {};
+      const nameLower = safe(p.structure).toLowerCase();
 
-layer.bindPopup(`
-<b>${p.structure}</b><br>
-Type : ${p.actor_type}<br>
-Services : ${p.service_domains}<br>
-Téléphone : ${p.phone || "N/A"}<br>
-Email : ${p.email || "N/A"}<br>
-Adresse : ${p.address || ""}
-`);
+      // used for auto-open after search
+      layer.__name = nameLower;
 
+      layer.bindPopup(makePopup(p), { maxWidth: 420 });
+    },
+  });
 }
 
-function redraw(){
+/* ----------------------------
+   Redraw + bounds
+---------------------------- */
+function redraw() {
   const filters = currentFilters();
-  const filtered = rawFeatures.filter(f => featureMatchesFilters(f, filters));
+  const filtered = rawFeatures.filter((f) => featureMatchesFilters(f, filters));
 
   if (layerAll) map.removeLayer(layerAll);
   layerAll = buildLayer(filtered).addTo(map);
 
-  // bounds
   const group = L.featureGroup([layerAll]);
   const b = group.getBounds();
   if (b && b.isValid()) allBounds = b;
 
-  // if search is used, open first match popup
-  if (filters.search && filtered.length > 0){
+  // Open first match if user typed something
+  if (filters.search && filtered.length > 0) {
     let opened = false;
-    layerAll.eachLayer(l=>{
-      if (!opened && l.__name && l.__name.includes(filters.search)){
+    layerAll.eachLayer((l) => {
+      if (opened) return;
+      if (l.__name && l.__name.includes(filters.search)) {
         l.openPopup();
-        map.panTo(l.getLatLng ? l.getLatLng() : map.getCenter());
+        if (l.getLatLng) map.panTo(l.getLatLng());
         opened = true;
       }
     });
   }
 }
 
-function fitToData(){
-  if (allBounds && allBounds.isValid()){
+function fitToData() {
+  if (allBounds && allBounds.isValid()) {
     map.fitBounds(allBounds.pad(0.15));
+  } else {
+    map.setView(MAP_DEFAULT.center, MAP_DEFAULT.zoom);
   }
 }
 
-document.getElementById("btn-fit").addEventListener("click", fitToData);
-document.getElementById("btn-reset").addEventListener("click", () => {
-  filterActorEl.value = "all";
-  filterServiceEl.value = "all";
-  searchEl.value = "";
+/* ----------------------------
+   Events
+---------------------------- */
+btnFit?.addEventListener("click", fitToData);
+
+btnReset?.addEventListener("click", () => {
+  if (filterActorEl) filterActorEl.value = "all";
+  if (filterServiceEl) filterServiceEl.value = "all";
+  if (searchEl) searchEl.value = "";
   redraw();
   fitToData();
 });
 
-filterActorEl.addEventListener("change", redraw);
-filterServiceEl.addEventListener("change", redraw);
-searchEl.addEventListener("input", () => {
-  // redraw live (simple & efficace)
+filterActorEl?.addEventListener("change", redraw);
+filterServiceEl?.addEventListener("change", redraw);
+
+searchEl?.addEventListener("input", () => {
   redraw();
 });
 
-// Load GeoJSON
-fetch(GEOJSON_URL)
-  .then(r => {
+/* ----------------------------
+   Load GeoJSON
+---------------------------- */
+fetch(GEOJSON_URL, { cache: "no-store" })
+  .then((r) => {
     if (!r.ok) throw new Error(`GeoJSON introuvable: ${GEOJSON_URL}`);
     return r.json();
   })
-  .then(geo => {
-    rawFeatures = geo.features || [];
+  .then((geo) => {
+    rawFeatures = Array.isArray(geo?.features) ? geo.features : [];
     populateServiceFilter(rawFeatures);
     redraw();
-
-    // initial fit
     setTimeout(fitToData, 250);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error(err);
-    alert("Erreur: impossible de charger le GeoJSON. Vérifiez ./data/actors_vbg_kolda.geojson");
+    alert(
+      "Erreur: impossible de charger le GeoJSON. Vérifiez ./data/actors_vbg_kolda.geojson"
+    );
   });
