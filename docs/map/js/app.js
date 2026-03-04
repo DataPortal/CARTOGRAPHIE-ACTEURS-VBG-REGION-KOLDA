@@ -166,13 +166,19 @@ function buildLayer(features){
       }
       return L.marker(latlng, { icon: triangleIcon() });
     },
-    onEachFeature: (feature, layer) => {
-      const p = feature.properties || {};
-      layer.bindPopup(makePopup(p), { maxWidth: 360 });
-      // store name for search “open first match”
-      layer.__name = safe(p.structure).toLowerCase();
-    }
-  });
+    function onEachFeature(feature, layer) {
+
+const p = feature.properties;
+
+layer.bindPopup(`
+<b>${p.structure}</b><br>
+Type : ${p.actor_type}<br>
+Services : ${p.service_domains}<br>
+Téléphone : ${p.phone || "N/A"}<br>
+Email : ${p.email || "N/A"}<br>
+Adresse : ${p.address || ""}
+`);
+
 }
 
 function redraw(){
