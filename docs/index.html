@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cartographie des acteurs VBG — Région de Kolda</title>
+  <meta name="description" content="Base de données, carte interactive, dashboard et analyse des gaps — Acteurs VBG Kolda." />
+
+  <style>
+    :root{
+      --bg:#f6f8fb;
+      --card:#ffffff;
+      --ink:#0b1220;
+      --muted:#5b6b80;
+      --line:rgba(11,18,32,.12);
+      --un-blue:#1f5fa8;
+      --un-blue-2:#2a76c6;
+      --uw-orange:#f58220;
+      --ok:#1a7f37;
+      --warn:#b54708;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      color:var(--ink);
+      background:var(--bg);
+      line-height:1.45;
+    }
+
+    a{ color:var(--un-blue); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    /* Header */
+    .hero{
+      background: linear-gradient(135deg, rgba(31,95,168,.10), rgba(245,130,32,.08));
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:22px;
+      display:flex;
+      gap:18px;
+      align-items:flex-start;
+      justify-content:space-between;
+      box-shadow: 0 10px 24px rgba(11,18,32,.06);
+    }
+    .hero-left{ max-width:760px; }
+    .kicker{
+      font-size:12px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin:0 0 6px;
+    }
+    h1{
+      font-size:26px;
+      line-height:1.2;
+      margin:0 0 10px;
+    }
+    .subtitle{
+      margin:0 0 14px;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .badges{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+    }
+    .badge{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.65);
+      color:var(--muted);
+    }
+    .hero-right{
+      min-width:220px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:stretch;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      border-radius:12px;
+      padding:11px 12px;
+      border:1px solid var(--line);
+      background:var(--card);
+      color:var(--ink);
+      font-weight:600;
+      cursor:pointer;
+      box-shadow: 0 6px 14px rgba(11,18,32,.06);
+    }
+    .btn.primary{
+      background: var(--un-blue);
+      color:white;
+      border-color: transparent;
+    }
+    .btn.primary:hover{ filter:brightness(.98); }
+    .btn:hover{ filter:brightness(.99); text-decoration:none; }
+    .btn small{
+      font-weight:500;
+      color: rgba(255,255,255,.9);
+    }
+    .btn .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: var(--uw-orange);
+      box-shadow: 0 0 0 4px rgba(245,130,32,.18);
+    }
+
+    /* Grid */
+    .grid{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:14px;
+    }
+    @media (max-width: 980px){
+      .hero{ flex-direction:column; }
+      .hero-right{ width:100%; flex-direction:row; flex-wrap:wrap; }
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      box-shadow: 0 10px 20px rgba(11,18,32,.05);
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      color:var(--muted);
+      padding:4px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background: rgba(31,95,168,.04);
+    }
+    .icon{
+      width:18px;height:18px;border-radius:6px;
+      background: rgba(31,95,168,.12);
+      display:inline-block;
+    }
+    .muted{ color:var(--muted); font-size:13px; margin:0; }
+    .list{
+      margin:10px 0 0;
+      padding:0 0 0 18px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* KPI */
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-top:10px;
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,.6);
+    }
+    .kpi .label{ font-size:12px; color:var(--muted); }
+    .kpi .value{ font-size:18px; font-weight:800; margin-top:6px; }
+    .kpi .hint{ font-size:12px; color:var(--muted); margin-top:2px; }
+    @media (max-width: 520px){
+      .kpis{ grid-template-columns: 1fr; }
+    }
+
+    /* Footer */
+    footer{
+      margin:18px 0 6px;
+      color:var(--muted);
+      font-size:12px;
+      text-align:center;
+    }
+    code.inline{
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(11,18,32,.03);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size:12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <section class="hero">
+      <div class="hero-left">
+        <p class="kicker">Protection • VBG • Information Management</p>
+        <h1>Cartographie des acteurs VBG — Région de Kolda</h1>
+        <p class="subtitle">
+          Site vitrine (GitHub Pages) contenant la <strong>base de données</strong>, la <strong>carte interactive</strong>,
+          un <strong>dashboard</strong> (optionnel) et l’<strong>analyse des gaps</strong> du système de prise en charge.
+        </p>
+
+        <div class="badges">
+          <span class="badge">Données structurées (Excel/CSV)</span>
+          <span class="badge">Carte web (Leaflet + GeoJSON)</span>
+          <span class="badge">Approche “Qui fait quoi, où, comment”</span>
+          <span class="badge">Mise à jour facile (commit → site)</span>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="label">Couverture</div>
+            <div class="value">Région de Kolda</div>
+            <div class="hint">Kolda • Vélingara • Médina Yoro Foulah</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Produits</div>
+            <div class="value">BDD + Carte</div>
+            <div class="hint">+ Analyse (gaps) • + Dashboard (option)</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Format</div>
+            <div class="value">Open data interne</div>
+            <div class="hint">GeoJSON pour web / CSV pour SIG</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <a class="btn primary" href="./map/" aria-label="Ouvrir la carte interactive">
+          <span class="dot"></span> Ouvrir la carte interactive
+        </a>
+
+        <a class="btn" href="./downloads/actors_vbg_kolda.xlsx">
+          Télécharger la base (Excel)
+        </a>
+
+        <a class="btn" href="./downloads/actors_vbg_kolda.csv">
+          Télécharger la base (CSV)
+        </a>
+
+        <a class="btn" href="./analysis/gaps.html">
+          Lire l’analyse des gaps
+        </a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2><span class="icon"></span> Ce que contient la base</h2>
+        <p class="muted">
+          Une matrice standardisée des acteurs intervenant dans la prévention et la prise en charge des VBG, avec
+          typologie de service, cibles, zone d’intervention, forces, limites et coordonnées.
+        </p>
+        <ul class="list">
+          <li><strong>Type d’acteur</strong> : service étatique, ONG/association</li>
+          <li><strong>Services</strong> : prévention, médical, psychosocial, juridique, autonomisation</li>
+          <li><strong>Qualité</strong> : champs normalisés + dictionnaire (si vous l’ajoutez)</li>
+          <li><strong>Cartographie</strong> : support GeoJSON (lat/lon) pour affichage web</li>
+        </ul>
+        <p class="muted" style="margin-top:12px;">
+          Astuce : si certains points ne s’affichent pas sur la carte, vérifiez que <code class="inline">latitude</code> et
+          <code class="inline">longitude</code> sont renseignés dans le GeoJSON.
+        </p>
+      </article>
+
+      <aside class="card">
+        <h2><span class="icon"></span> Navigation rapide</h2>
+        <ul class="list">
+          <li><a href="./map/">Carte interactive (Leaflet)</a></li>
+          <li><a href="./downloads/actors_vbg_kolda.xlsx">Téléchargement Excel</a></li>
+          <li><a href="./downloads/actors_vbg_kolda.csv">Téléchargement CSV</a></li>
+          <li><a href="./analysis/gaps.html">Analyse des gaps</a></li>
+          <li><a href="./dashboard/">Dashboard (optionnel)</a></li>
+        </ul>
+
+        <h2 style="margin-top:16px;"><span class="icon"></span> Mise à jour</h2>
+        <p class="muted">
+          Remplacez les fichiers dans <code class="inline">docs/downloads/</code> et
+          <code class="inline">docs/map/data/</code>, puis faites un commit.
+          GitHub Pages mettra le site à jour automatiquement.
+        </p>
+      </aside>
+    </section>
+
+    <footer>
+      © Cartographie des acteurs VBG — Kolda • GitHub Pages • Version statique (HTML/JS)
+    </footer>
+
+  </div>
+</body>
+</html>
